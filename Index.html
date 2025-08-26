@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>🤖 روبوت المحاكاة الذكي</title>
+  <style>
+    body {
+      font-family: "Tajawal", sans-serif;
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      color: #fff;
+      transition: background 0.5s, color 0.5s;
+    }
+    header {
+      background: rgba(0,0,0,0.6);
+      padding: 15px;
+      text-align: center;
+      font-size: 24px;
+      font-weight: bold;
+      color: #0f0;
+      border-bottom: 2px solid #0f0;
+      position: relative;
+    }
+    #modeToggle, #settingsToggle {
+      position: absolute;
+      top: 10px;
+      background: #238636;
+      border: none;
+      border-radius: 20px;
+      padding: 5px 15px;
+      cursor: pointer;
+      color: #fff;
+      font-size: 14px;
+    }
+    #modeToggle { right: 15px; }
+    #settingsToggle { left: 15px; }
+    #chat {
+      flex: 1;
+      width: 95%;
+      max-width: 700px;
+      margin: 15px auto;
+      padding: 15px;
+      background: rgba(0,0,0,0.6);
+      border-radius: 15px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      border: 1px solid #0f0;
+      transition: background 0.5s;
+    }
+    .msg {
+      margin: 8px;
+      padding: 10px 15px;
+      border-radius: 15px;
+      max-width: 75%;
+      font-size: 16px;
+      line-height: 1.4;
+      box-shadow: 0 0 5px rgba(0,0,0,0.3);
+    }
+    .user { align-self: flex-end; background: #238636; }
+    .bot { align-self: flex-start; background: #30363d; }
+    footer {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      margin: 15px;
+      width: 95%;
+      max-width: 700px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    input {
+      flex: 1;
+      padding: 12px;
+      border-radius: 25px;
+      border: none;
+      outline: none;
+      font-size: 16px;
+      background: #161b22;
+      color: #fff;
+      box-shadow: inset 0 0 5px #0f0;
+    }
+    button {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      font-size: 20px;
+      color: #fff;
+      background: #238636;
+      transition: 0.3s;
+      flex-shrink: 0;
+    }
+    button:hover { background: #2ea043; }
+    .clear-btn { background: #d73a49; }
+    .clear-btn:hover { background: #f85149; }
+    video {
+      width: 90%;
+      max-width: 400px;
+      border: 3px solid #0f0;
+      border-radius: 12px;
+      margin: 10px auto;
+      display: block;
+      box-shadow: 0 0 15px rgba(0,255,0,0.5);
+    }
+    body.light {
+      background: linear-gradient(135deg, #e0eafc, #cfdef3);
+      color: #000;
+    }
+    body.light header { background: rgba(255,255,255,0.8); color: #111; border-bottom: 2px solid #238636; }
+    body.light #chat { background: rgba(255,255,255,0.8); border: 1px solid #238636; }
+    body.light input { background: #fff; color: #111; box-shadow: inset 0 0 5px #238636; }
+    #sidebar {
+      position: fixed;
+      left: -250px;
+      top: 0;
+      width: 250px;
+      height: 100%;
+      background: rgba(0,0,0,0.9);
+      color: #fff;
+      padding: 20px;
+      box-shadow: 3px 0 10px rgba(0,0,0,0.6);
+      transition: left 0.4s;
+      z-index: 1000;
+    }
+    #sidebar.open { left: 0; }
+    #sidebar h2 { font-size: 20px; margin-bottom: 15px; }
+    #sidebar label { display: block; margin: 10px 0 5px; }
+    #sidebar select, #sidebar input[type=range] {
+      width: 100%;
+      padding: 5px;
+      border-radius: 8px;
+      border: none;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    🤖 روبوت المحاكاة الذكي
+    <button id="settingsToggle">⚙️ إعدادات</button>
+    <button id="modeToggle">☀️ نهاري</button>
+  </header>
+
+  <div id="sidebar">
+    <h2>⚙️ الإعدادات</h2>
+    <label>🌍 اللغة</label>
+    <select id="langSelect">
+      <option value="ar-SA">العربية</option>
+      <option value="en-US">English</option>
+    </select>
+    <label>🎚 سرعة الصوت</label>
+    <input id="speedRange" type="range" min="0.5" max="2" step="0.1" value="1">
+    <label>🔠 حجم الخط</label>
+    <select id="fontSelect">
+      <option value="14">صغير</option>
+      <option value="16" selected>متوسط</option>
+      <option value="20">كبير</option>
+    </select>
+  </div>
+
+  <div id="chat"></div>
+  <video id="video" autoplay muted playsinline></video>
+
+  <footer>
+    <input id="userInput" type="text" placeholder="اكتب رسالتك هنا..." />
+    <button onclick="sendMessage()">📩</button>
+    <button onclick="startRecognition()">🎤</button>
+    <button onclick="detectObjects()">📷</button>
+    <button onclick="detectFaces()">😊</button>
+    <button class="clear-btn" onclick="clearChat()">🗑️</button>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
+  <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+
+  <script>
+    // --- العناصر الأساسية ---
+    const chatBox = document.getElementById("chat");
+    const video = document.getElementById("video");
+    const userInput = document.getElementById("userInput");
+
+    // --- متغيرات الحالة ---
+    let memory = [];
+    let speechLang = "ar-SA";
+    let speechSpeed = 1;
+    let faceApiLoaded = false;
+    let faceDetectionInterval;
+    let objectDetectionInterval;
+
+    // --- دوال أساسية لواجهة المستخدم ---
+    function addMessage(text, sender) {
+      const div = document.createElement("div");
+      div.className = "msg " + sender;
+      div.style.fontSize = document.getElementById("fontSelect").value + "px";
+      div.innerText = text;
+      chatBox.appendChild(div);
+      chatBox.scrollTop = chatBox.scrollHeight;
+      memory.push({ role: sender === "user" ? "user" : "assistant", content: text });
+      if (memory.length > 12) memory.shift();
+    }
+
+    function say(text) {
+      addMessage(text, "bot");
+      const speech = new SpeechSynthesisUtterance(text);
+      speech.lang = speechLang;
+      speech.rate = speechSpeed;
+      window.speechSynthesis.speak(speech);
+    }
+
+    function clearChat() {
+      chatBox.innerHTML = "";
+      memory = [];
+      say("تم مسح المحادثة ✨");
+    }
+
+    // --- جلب البيانات الحية (الطقس) ---
+    function getWeather() {
+      say("بالتأكيد، سأحاول تحديد موقعك لجلب حالة الطقس.");
+      if (!navigator.geolocation) {
+        say("عذراً، متصفحك لا يدعم خدمة تحديد المواقع.");
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(async (position) => {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+        say("تم تحديد موقعك. جاري جلب بيانات الطقس...");
+        try {
+          const response = await fetch(`https://wttr.in/${lat},${lon}?format=j1`);
+          if (!response.ok) throw new Error('Weather API failed');
+          const weatherData = await response.json();
+          const area = weatherData.nearest_area[0].areaName[0].value;
+          const currentCondition = weatherData.current_condition[0];
+          const temp_C = currentCondition.temp_C;
+          const feelsLike_C = currentCondition.FeelsLikeC;
+          const description = currentCondition.weatherDesc[0].value;
+          const weatherReport = `الطقس الآن في أقرب منطقة لك، ${area}، هو ${temp_C} درجة مئوية، لكن الإحساس الفعلي هو ${feelsLike_C} درجة. السماء توصف بأنها: ${description}.`;
+          say(weatherReport);
+        } catch (error) {
+          console.error("Error fetching weather:", error);
+          say("عذراً، واجهت مشكلة أثناء محاولة جلب بيانات الطقس.");
+        }
+      }, () => {
+        say("لم أتمكن من الوصول إلى موقعك. يرجى التأكد من أنك سمحت بالوصول إلى الموقع.");
+      });
+    }
+
+    // --- معالجة المدخلات والذكاء الحواري ---
+    async function sendMessage() {
+      const text = userInput.value.trim();
+      if (!text) return;
+      addMessage(text, "user");
+      userInput.value = "";
+
+      if (text.includes("الطقس")) {
+        getWeather();
+      } else if (text.includes("من هو مكتشف الجاذبية")) {
+        const reply = "الشخص الأكثر شهرة باكتشاف قانون الجاذبية هو السير إسحاق نيوتن.";
+        say(reply);
+      } else if (text.includes("فوائد ممارسة الرياضة")) {
+        const reply = "ممارسة الرياضة بانتظام لها فوائد كثيرة! فهي تساعد في التحكم بالوزن، تحارب الأمراض، تحسن المزاج، تزيد الطاقة، وتعزز النوم بشكل أفضل.";
+        say(reply);
+      } else if (text.includes("ابحث عن")) {
+        const query = text.replace("ابحث عن", "").trim();
+        say(`جاري البحث عن: ${query}. هذه الميزة قيد التطوير حالياً.`);
+      } else {
+        say("لم تتم برمجتي على فهم هذا بعد، لكني أتعلم باستمرار!");
+      }
+    }
+
+    // --- وظائف الأوامر الصوتية ---
+    function startRecognition() {
+      const recognition = new(window.SpeechRecognition || window.webkitSpeechRecognition)();
+      recognition.lang = speechLang;
+      recognition.start();
+      recognition.onresult = function(event) {
+        const userSpeech = event.results[0][0].transcript.trim();
+        addMessage(userSpeech, "user");
+        if (userSpeech.includes("امسح المحادثة")) {
+          clearChat();
+        } else if (userSpeech.includes("الوضع الليلي")) {
+          document.body.classList.remove("light");
+          document.getElementById("modeToggle").innerText = "☀️ نهاري";
+          say("تم تفعيل الوضع الليلي.");
+        } else if (userSpeech.includes("الوضع النهاري")) {
+          document.body.classList.add("light");
+          document.getElementById("modeToggle").innerText = "🌙 ليلي";
+          say("تم تفعيل الوضع النهاري.");
+        } else {
+          userInput.value = userSpeech;
+          sendMessage();
+        }
+      };
+      recognition.onerror = function(event) {
+        say("عذراً، لم أتمكن من سماعك بوضوح.");
+      }
+    }
+
+    // --- وظائف الرؤية الحاسوبية (الأشياء) ---
+    async function detectObjects() {
+      say("جاري تحميل نموذج التعرف على الأشياء...");
+      const model = await cocoSsd.load();
+      say("تم تشغيل نظام الرؤية لوصف الأشياء.");
+      if (faceDetectionInterval) clearInterval(faceDetectionInterval);
+      if (objectDetectionInterval) clearInterval(objectDetectionInterval);
+      let lastSaidObjects = "";
+      objectDetectionInterval = setInterval(async () => {
+        const predictions = await model.detect(video);
+        if (predictions.length > 0) {
+          const uniqueObjects = Array.from(new Set(predictions.map(p => p.class)));
+          const currentObjectsKey = uniqueObjects.sort().join(',');
+          if (currentObjectsKey === lastSaidObjects) return;
+          lastSaidObjects = currentObjectsKey;
+          let description = "أرى في المشهد ";
+          if (uniqueObjects.length === 1) description += uniqueObjects[0] + ".";
+          else if (uniqueObjects.length === 2) description += uniqueObjects[0] + " و " + uniqueObjects[1] + ".";
+          else {
+            const lastObject = uniqueObjects.pop();
+            description += uniqueObjects.join("، ") + "، بالإضافة إلى " + lastObject + ".";
+          }
+          say(description);
+        }
+      }, 5000);
+    }
+
+    // --- وظائف الرؤية الحاسوبية (الوجوه والمشاعر) ---
+    async function loadFaceApiModels() {
+      if (faceApiLoaded) return;
+      say("جاري تحميل نماذج التعرف على الوجه للمرة الأولى...");
+      const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/';
+      await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+      await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+      await faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL);
+      say("نماذج التعرف على الوجه جاهزة.");
+      faceApiLoaded = true;
+    }
+    const emotionTranslations = {
+      neutral: 'محايد', happy: 'سعيد', sad: 'حزين', angry: 'غاضب',
+      fearful: 'خائف', disgusted: 'مشمئز', surprised: 'متفاجئ'
+    };
+    async function detectFaces() {
+      if (!faceApiLoaded) await loadFaceApiModels();
+      if (objectDetectionInterval) clearInterval(objectDetectionInterval);
+      if (faceDetectionInterval) clearInterval(faceDetectionInterval);
+      say("تم تفعيل نظام التعرف على المشاعر. انظر إلى الكاميرا.");
+      faceDetectionInterval = setInterval(async () => {
+        const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceExpressions();
+        if (detections.length > 0) {
+          const expressions = detections[0].expressions;
+          let highestEmotion = Object.keys(expressions).reduce((a, b) => expressions[a] > expressions[b] ? a : b);
+          say(`أرى وجهاً يبدو أنه ${emotionTranslations[highestEmotion]}.`);
+          clearInterval(faceDetectionInterval);
+          say("تم إيقاف التعرف على المشاعر.");
+        }
+      }, 3000);
+    }
+
+    // --- إعدادات وعمليات بدء التشغيل ---
+    async function startCamera() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { exact: "environment" } } });
+        video.srcObject = stream;
+      } catch (e) {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        video.srcObject = stream;
+      }
+    }
+    document.getElementById("modeToggle").onclick = () => {
+      document.body.classList.toggle("light");
+      const btn = document.getElementById("modeToggle");
+      btn.innerText = document.body.classList.contains("light") ? "🌙 ليلي" : "☀️ نهاري";
+    };
+    document.getElementById("settingsToggle").onclick = () => document.getElementById("sidebar").classList.toggle("open");
+    document.getElementById("langSelect").onchange = (e) => speechLang = e.target.value;
+    document.getElementById("speedRange").oninput = (e) => speechSpeed = parseFloat(e.target.value);
+    userInput.addEventListener("keypress", (e) => { if (e.key === "Enter") sendMessage(); });
+
+    // --- بدء تشغيل التطبيق ---
+    (async () => {
+      await startCamera();
+      say("مرحبًا! أنا روبوت المحاكاة الذكي. أنا جاهز للتفاعل.");
+      await loadFaceApiModels();
+    })();
+  </script>
+</body>
+</html>
